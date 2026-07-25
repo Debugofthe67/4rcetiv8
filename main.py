@@ -4,6 +4,8 @@ import time
 import sqlite3
 import tempfile
 
+import requests
+
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget,
     QVBoxLayout, QPushButton, QLabel, QMessageBox
@@ -16,38 +18,6 @@ from pymobiledevice3.services.diagnostics import DiagnosticsService
 
 
 BACKEND_URL = 'http://overcast302.dev/hacktiv8/server.php'
-
-SUPPORTED = {
-    'iPhone4,1': {'9.3.5', '9.3.6'},
-
-    'iPad2,1': {'8.4.1', '9.3.5'},
-    'iPad2,2': {'9.3.5', '9.3.6'},
-    'iPad2,3': {'9.3.5', '9.3.6'},
-    'iPad2,4': {'8.4.1', '9.3.5'},
-
-    'iPad2,5': {'8.4.1', '9.3.5'},
-    'iPad2,6': {'9.3.5', '9.3.6'},
-    'iPad2,7': {'9.3.5', '9.3.6'},
-
-    'iPad3,1': {'8.4.1', '9.3.5'},
-    'iPad3,2': {'9.3.5', '9.3.6'},
-    'iPad3,3': {'9.3.5', '9.3.6'},
-
-    'iPod5,1': {'8.4.1', '9.3.5'},
-
-    'iPhone5,1': {'10.3.3', '10.3.4'},
-    'iPhone5,2': {'10.3.3', '10.3.4'},
-
-    'iPhone5,3': {'10.3.3', '10.3.4'},
-    'iPhone5,4': {'10.3.3', '10.3.4'},
-
-    'iPad3,4': {'10.3.3', '10.3.4'},
-    'iPad3,5': {'10.3.3', '10.3.4'},
-    'iPad3,6': {'10.3.3', '10.3.4'},
-
-    'iPhone6,1': {'10.3.3'},
-    'iPhone6,2': {'10.3.3'}
-}
 
 # pyinstaller resource path fix
 def resource_path(name):
@@ -73,6 +43,14 @@ def build_db_from_sql(sql_path, backend_url, target_path):
             return f.read()
     finally:
         os.unlink(tmp.name)
+
+def query_support(product, build):
+    resp = requests.get(
+        BACKEND_URL,
+        params={'support_query': '1', 'model': product, 'build': build},
+        timeout=10,
+    )
+    return resp.json().get('supported', False)
 
 class ActivationThread(QThread):
     status = pyqtSignal(str)
@@ -163,6 +141,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('hacktiv8 v1.1.1')
         self.setFixedSize(500, 200)
 
+        self.support_cache = {}
+
         self.status = QLabel('No device connected')
         self.activate = QPushButton('Activate Device')
         self.activate.setEnabled(False)
@@ -188,21 +168,24 @@ class MainWindow(QMainWindow):
 
             product = values.get('ProductType')
             version = values.get('ProductVersion')
-
-            is_supported = SUPPORTED.get(product)
-
-            if not is_supported:
-                self._set_state(f'Unsupported Device: {product}', False)
-                return
-
-            if version not in is_supported:
-                self._set_state(f'Unsupported {product} iOS version: {version}', False)
-                return
-
-            self._set_state(f'Connected: {product} ({version})', True)
-
+            build = values.get('BuildVersion')
         except Exception:
             self._set_state('No device connected', False)
+            return
+
+        key = (product, build)
+        if key not in self.support_cache:
+            try:
+                self.support_cache[key] = query_support(product, build)
+            except Exception:
+                self._set_state('Could not reach backend. Please check your internet connection!', False)
+                return
+
+        if not self.support_cache[key]:
+            self._set_state(f'Unsupported {product} iOS version: {version}', False)
+            return
+
+        self._set_state(f'Connected: {product} ({version})', True)
 
     def _set_state(self, text, enabled):
         self.status.setText(text)

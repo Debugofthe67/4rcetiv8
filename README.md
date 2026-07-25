@@ -15,7 +15,7 @@ Network connectivity is mandatory for the application workflow to function corre
 
 ## Compatibility
 
-The tool is compatible with all A5 and A6 devices running **iOS 10.3.4**, **iOS 10.3.3**, **iOS 9.3.6**, **iOS 9.3.5**, and **Wi-Fi** devices running **iOS 8.4.1**.  
+The tool targets iOS 9 and 10 devices (and Wi-Fi-only devices on iOS 8.4.1).
 
 ## Backend Configuration
 
