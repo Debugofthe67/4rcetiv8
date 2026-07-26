@@ -10,12 +10,12 @@ The authors and contributors take no responsibility for any misuse or damage cau
 
 ## Requirements
 
-The target device must be connected to Wi-Fi at all times during operation.  
+The both host and target devices must be connected to Wi-Fi at all times during operation.  
 Network connectivity is mandatory for the application workflow to function correctly.
 
 ## Compatibility
 
-The tool targets iOS 9 and 10 devices (and Wi-Fi-only devices on iOS 8.4.1).
+The tool targets iOS 9 and 10 devices (and Wi-Fi-only devices on iOS 8).
 
 ## Backend Configuration
 
