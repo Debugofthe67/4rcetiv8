@@ -123,7 +123,7 @@ class ActivationThread(QThread):
                 time.sleep(5)
 
             self.error.emit(
-                'Activation failed after multiple attempts. Make sure the device is connected to the Wi-Fi.'
+                'Activation failed after multiple attempts. Make sure the target device is connected to the Wi-Fi.'
             )
 
         except TimeoutError:
