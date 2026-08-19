@@ -1,7 +1,6 @@
-# hacktiv8 
+# 4rcetiv8
 
-hacktiv8(formerly A5_Bypass_OSS) is an open-source research project focused on analyzing and experimenting with iOS activation proccess using itunesstored sandbox escape vulnerability. It provides a one-click cross-platform solution for bypassing activation on legacy iOS devices without the need of pwning.
-
+4rcetiv8  is an open-source fork of hacktiv8(formerly A5_Bypass_OSS). It will have a wide spread of iOS devices `A4` , `A5`, and `A6`
 ## Disclaimer
 
 This project is intended strictly for research and educational purposes.  
@@ -27,6 +26,7 @@ Due to legacy iOS devices lacking trust for modern certificate authorities, the 
 - [pkkf5673](https://github.com/bablaerrr)
 - [bl_sbx](https://github.com/hanakim3945/bl_sbx)
 - [pymobiledevice3](https://github.com/doronz88/pymobiledevice3)
+- [overcast302](https://github.com/overcast302/)
 
 ## License
 
