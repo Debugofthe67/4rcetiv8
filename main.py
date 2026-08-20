@@ -17,7 +17,7 @@ from pymobiledevice3.services.afc import AfcService
 from pymobiledevice3.services.diagnostics import DiagnosticsService
 
 
-BACKEND_URL = 'http://overcast302.dev/hacktiv8/server.php'
+BACKEND_URL = 'http://tp67.site.je/server.php'
 
 # pyinstaller resource path fix
 def resource_path(name):
