@@ -1,0 +1,95 @@
+name: Build 4rcetiv8
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build ${{ matrix.file_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            file_name: "hacktiv8_windows.exe"  # Added extension here to make targeting easier
+          - os: ubuntu-latest
+            file_name: "hacktiv8_linux"
+          - os: macos-latest
+            file_name: "hacktiv8_macos_arm64"
+          - os: macos-13                  # Replaced macos-15-intel with official macos-13 x86 runner
+            file_name: "hacktiv8_macos_intel"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Install DMG Creator
+      if: runner.os == 'macOS'
+      run: brew install create-dmg
+
+    - name: Build with PyInstaller
+      env:
+        MACOSX_DEPLOYMENT_TARGET: "10.13"
+      # Changed --name to output cleanly without the .exe extension during compilation
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --name "${{ matrix.file_name }}" --add-data "payload.sql:." --hidden-import "pymobiledevice3" main.py
+
+    - name: Package macOS DMG
+      if: runner.os == 'macOS'
+      run: |
+        cd dist
+        plutil -replace LSMinimumSystemVersion -string "10.13" "${{ matrix.file_name }}.app/Contents/Info.plist"
+        codesign --force --deep --sign - "${{ matrix.file_name }}.app"
+        create-dmg --volname "hacktiv8" --window-pos 200 120 --window-size 600 300 --icon-size 100 --text-size 12 --hide-extension "${{ matrix.file_name }}.app" --app-drop-link 450 140 --icon "${{ matrix.file_name }}.app" 150 140 "${{ matrix.file_name }}.dmg" "${{ matrix.file_name }}.app"
+
+    # Uploads raw, raw unzipped files as artifacts so the Release job can download them
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.file_name }}-bin
+        path: |
+          dist/*.dmg
+          dist/*.exe
+          dist/${{ matrix.file_name }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Crucial permission required to publish releases
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+
+    # Moves files out of their tracking folders into a flat directory
+    - name: Organize Release Assets
+      run: |
+        mkdir ./release_files
+        find ./artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o ! -name "*.*" \) -exec cp {} ./release_files/ \;
+        ls -l ./release_files
+
+    - name: Create and Upload to Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: Release v1.0.${{ github.run_number }}
+        draft: false
+        prerelease: false
+        files: |
+          ./release_files/*
