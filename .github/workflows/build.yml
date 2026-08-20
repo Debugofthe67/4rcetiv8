@@ -61,18 +61,3 @@ jobs:
           dist/*.exe
           dist/${{ matrix.file_name }}
 
-              - name: Organize Release Assets
-      run: |
-        mkdir ./release_files
-        find ./artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o ! -name "*.*" \) -exec cp {} ./release_files/ \;
-        ls -l ./release_files
-
-    - name: Create and Upload to Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: v1.0.${{ github.run_number }}
-        name: Release v1.0.${{ github.run_number }}
-        draft: false
-        prerelease: false
-        files: |
-          ./release_files/*
